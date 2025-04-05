@@ -1,87 +1,58 @@
 ﻿using Backend.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Backend.Repositories
 {
-    public abstract class GenericRepository<T>(AgendaContext context) where T : class
+    public class GenericRepository<TEntity> where TEntity : class
     {
-        protected readonly AgendaContext _context 
-            = context;
+        private readonly AgendaContext _context;
+        private readonly DbSet<TEntity> _dbSet;
 
-        public void Add(T model)
+        public GenericRepository(AgendaContext context)
         {
-            _context.Set<T>().Add(model);
-            _context.SaveChanges();
+            _context = context;
+            _dbSet = context.Set<TEntity>();
         }
 
-        public void AddRange(IEnumerable<T> model)
+        public async Task<IEnumerable<TEntity>> Get(Expression<Func<TEntity, bool>> predicate)
         {
-            _context.Set<T>().AddRange(model);
-            _context.SaveChanges();
+            return await _dbSet.Where(predicate).ToListAsync();
         }
 
-        public T? GetId(int id)
+        public async Task<TEntity?> GetByIdAsync(int id)
         {
-            return _context.Set<T>().Find(id);
+            return await _dbSet.FindAsync(id);
         }
 
-        public async Task<T?> GetIdAsync(int id)
+        public async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            return await _context.Set<T>().FindAsync(id);
+            return await _dbSet.ToListAsync();
         }
 
-        public T? Get(Expression<Func<T, bool>> predicate)
+        public async Task AddAsync(TEntity entity)
         {
-            return _context.Set<T>().FirstOrDefault(predicate);
+            await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<T?> GetAsync(Expression<Func<T, bool>> predicate)
+        public async Task UpdateAsync(TEntity entity)
         {
-            return await _context.Set<T>().FirstOrDefaultAsync(predicate);
+            _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
         }
 
-        public IEnumerable<T> GetList(Expression<Func<T, bool>> predicate)
+        public async Task DeleteAsync(int id)
         {
-            return _context.Set<T>().Where<T>(predicate).ToList();
-        }
-
-        public async Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await Task.Run(() => _context.Set<T>().Where<T>(predicate));
-        }
-
-        public IEnumerable<T> GetAll()
-        {
-            return _context.Set<T>().ToList();
-        }
-
-        public async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await Task.Run(() => _context.Set<T>());
-        }
-
-        public int Count()
-        {
-            return _context.Set<T>().Count();
-        }
-
-        public async Task<int> CountAsync()
-        {
-            return await _context.Set<T>().CountAsync();
-        }
-
-        public void Update(T objModel)
-        {
-            _context.Entry(objModel).State = EntityState.Modified;
-            _context.SaveChanges();
-        }
-
-        public void Remove(T objModel)
-        {
-            _context.Set<T>().Remove(objModel);
-            _context.SaveChanges();
+            var entity = await GetByIdAsync(id);
+            if (entity != null)
+            {
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
-

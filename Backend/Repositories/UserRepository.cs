@@ -3,7 +3,8 @@ using Backend.Models;
 
 namespace Backend.Repositories
 {
-    public class UserRepository(AgendaContext context) : GenericRepository<User>(context)
+    public class UserRepository : GenericRepository<User>
     {
+        public UserRepository(AgendaContext context) : base(context) { }
     }
 }
