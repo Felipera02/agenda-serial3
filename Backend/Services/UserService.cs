@@ -22,9 +22,9 @@ namespace Backend.Services
             return await _userRepository.GetAllAsync();
         }
 
-        public async Task CreateUserAsync(User user)
+        public async Task<User> CreateUserAsync(User user)
         {
-            await _userRepository.AddAsync(user);
+            return await _userRepository.AddAsync(user);
         }
 
         public async Task UpdateUserAsync(User user)
